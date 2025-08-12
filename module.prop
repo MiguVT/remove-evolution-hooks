@@ -1,0 +1,7 @@
+id=remove_evolution_hooks
+name=Remove Evolution X Hooks
+version=v1.0
+versionCode=1
+author=MiguVT
+description=Removes problematic Evolution X properties that cause root detection (persist.sys.gphooks.enable, persist.sys.pphooks.enable, sys.init.perf_lsm_hooks)
+updateJson=
