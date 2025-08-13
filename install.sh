@@ -23,7 +23,7 @@ if [ -f "$MODDIR/post-fs-data.sh" ]; then
         ui_print "✅ persist.sys.pphooks.enable removed"
     fi
     
-    ui_print "- Properties removed successfully!"
+    ui_print "- Properties removed successfully! no reboot needed"
     ui_print "- Module will also run on each boot"
 else
     ui_print "❌ post-fs-data.sh not found"
