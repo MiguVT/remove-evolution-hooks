@@ -1,0 +1,58 @@
+name: Create Latest Release
+
+on:
+  workflow_run:
+    workflows: ['Build and Release']
+    types:
+      - completed
+
+permissions:
+  contents: write
+  packages: write
+  actions: read
+
+jobs:
+  update-latest:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Get latest release info
+        id: latest_release
+        run: |
+          LATEST_RELEASE=$(curl -s "https://api.github.com/repos/${{ github.repository }}/releases/latest" | jq -r '.tag_name')
+          echo "LATEST_TAG=$LATEST_RELEASE" >> $GITHUB_OUTPUT
+
+          # Get the ZIP file name from the latest release
+          ZIP_NAME=$(curl -s "https://api.github.com/repos/${{ github.repository }}/releases/latest" | jq -r '.assets[0].name')
+          echo "ZIP_NAME=$ZIP_NAME" >> $GITHUB_OUTPUT
+
+          # Extract version info
+          VERSION=$(curl -s "https://api.github.com/repos/${{ github.repository }}/releases/latest" | jq -r '.name')
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Update JSON for auto-update
+        run: |
+          # Get the latest build number from the tag
+          BUILD_NUM=$(echo "${{ steps.latest_release.outputs.LATEST_TAG }}" | sed 's/build-//')
+
+          # Create updated JSON
+          cat > update.json << EOF
+          {
+            "version": "v1.1-build${BUILD_NUM}",
+            "versionCode": ${BUILD_NUM},
+            "zipUrl": "https://github.com/${{ github.repository }}/releases/download/${{ steps.latest_release.outputs.LATEST_TAG }}/${{ steps.latest_release.outputs.ZIP_NAME }}",
+            "changelog": "https://github.com/${{ github.repository }}/releases/tag/${{ steps.latest_release.outputs.LATEST_TAG }}"
+          }
+          EOF
+
+      - name: Commit updated JSON
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action Auto-Update"
+          git add update.json
+          git diff --staged --quiet || git commit -m "Auto-update: Update JSON for ${{ steps.latest_release.outputs.VERSION }} [skip ci]"
+          git push

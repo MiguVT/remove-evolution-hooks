@@ -19,12 +19,25 @@ A Magisk module that continuously monitors and removes problematic Evolution X p
   - `persist.syspphooks.enable`
 - **Comprehensive Logging**: Detailed logs with timestamps and status tracking
 - **Automatic Builds**: GitHub Actions workflow for automated releases
+- **Auto-Update**: Built-in update checking through Magisk Manager
 
 ## 📱 Installation
 
 1. Download the latest build from [Releases](../../releases)
-2. Flash the ZIP file through Magisk Manager
+2. Flash the ZIP file through Magisk Manager, KernelSU or any fork of them
 3. Reboot your device
+
+## 🔄 Auto-Update
+
+The module supports automatic update checking through Magisk and KernelSU Manager, supporting a big range of forks, for update will be like this:
+
+- Your root manager will periodically check for updates
+- When a new version is available, you'll see an update notification
+- Simply tap "Update" to download and install the latest version
+
+> This process can change depending on your root manager, but the core functionality remains the same and it will be easy to follow.
+
+**Update URL**: `https://raw.githubusercontent.com/MiguVT/remove-evolution-hooks/main/update.json`
 
 ## 🔧 How It Works
 

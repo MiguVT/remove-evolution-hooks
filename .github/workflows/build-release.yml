@@ -49,6 +49,19 @@ jobs:
           zip -r "../Remove-Evolution-Hooks-Build-${{ steps.build_number.outputs.BUILD_NUMBER }}.zip" .
           cd ..
 
+      - name: Update JSON for auto-update
+        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+        run: |
+          # Create updated JSON with new version info
+          cat > update.json << EOF
+          {
+            "version": "v1.1-build${{ steps.build_number.outputs.BUILD_NUMBER }}",
+            "versionCode": ${{ steps.build_number.outputs.BUILD_NUMBER }},
+            "zipUrl": "https://github.com/MiguVT/remove-evolution-hooks/releases/download/build-${{ steps.build_number.outputs.BUILD_NUMBER }}/Remove-Evolution-Hooks-Build-${{ steps.build_number.outputs.BUILD_NUMBER }}.zip",
+            "changelog": "https://github.com/MiguVT/remove-evolution-hooks/releases/tag/build-${{ steps.build_number.outputs.BUILD_NUMBER }}"
+          }
+          EOF
+
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
@@ -98,3 +111,12 @@ jobs:
           make_latest: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Commit updated JSON
+        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add update.json
+          git diff --staged --quiet || git commit -m "Auto-update: Update JSON for build ${{ steps.build_number.outputs.BUILD_NUMBER }} [skip ci]"
+          git push
