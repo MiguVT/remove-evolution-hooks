@@ -7,6 +7,12 @@ on:
     branches: [main, master]
   workflow_dispatch:
 
+# Add permissions for GitHub token
+permissions:
+  contents: write
+  packages: write
+  actions: read
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -79,14 +85,16 @@ jobs:
 
             **Installation:**
             1. Download the zip file below
-            2. Flash via Magisk Manager
+            2. Flash via Magisk Manager or KernelSU (or forks of them)
             3. Reboot device
-            4. Check `/data/adb/modules/remove_evolution_hooks/service.log` for status
+            4. Module will automatically start monitoring properties
 
-            **Compatibility:** Android 7+ with Magisk
+            **Compatibility:** Android 7+ with Magisk or KernelSU (or forks of them, fully tested with KernelSU-Next + SuSFS)
 
           files: Remove-Evolution-Hooks-Build-${{ steps.build_number.outputs.BUILD_NUMBER }}.zip
           draft: false
           prerelease: false
+          generate_release_notes: true
+          make_latest: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
