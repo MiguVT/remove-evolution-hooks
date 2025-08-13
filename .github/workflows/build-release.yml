@@ -1,0 +1,92 @@
+name: Build and Release
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up build number
+        id: build_number
+        run: echo "BUILD_NUMBER=${{ github.run_number }}" >> $GITHUB_OUTPUT
+
+      - name: Update module.prop version
+        run: |
+          sed -i "s/version=.*/version=v1.1-build${{ steps.build_number.outputs.BUILD_NUMBER }}/" module.prop
+          sed -i "s/versionCode=.*/versionCode=${{ steps.build_number.outputs.BUILD_NUMBER }}/" module.prop
+
+      - name: Create module zip
+        run: |
+          # Create temporary directory
+          mkdir -p temp_module
+
+          # Copy module files
+          cp module.prop temp_module/
+          cp service.sh temp_module/
+          cp post-fs-data.sh temp_module/
+          cp uninstall.sh temp_module/
+
+          # Make scripts executable
+          chmod +x temp_module/*.sh
+
+          # Create zip
+          cd temp_module
+          zip -r "../Remove-Evolution-Hooks-Build-${{ steps.build_number.outputs.BUILD_NUMBER }}.zip" .
+          cd ..
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Remove-Evolution-Hooks-Build-${{ steps.build_number.outputs.BUILD_NUMBER }}
+          path: Remove-Evolution-Hooks-Build-${{ steps.build_number.outputs.BUILD_NUMBER }}.zip
+
+      - name: Create Release
+        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: 'build-${{ steps.build_number.outputs.BUILD_NUMBER }}'
+          name: 'Build ${{ steps.build_number.outputs.BUILD_NUMBER }}'
+          body: |
+            🔋 **Automated Build** of Remove Evolution X Hooks module
+
+            **Key Features:**
+            - ⚡ Adaptive monitoring intervals (60s - 5min) to minimize battery drain
+            - 🔄 Continuous property monitoring and auto-deletion
+            - 📊 Intelligent idle detection with extended check intervals
+            - 🚀 Early boot cleanup via post-fs-data script
+            - 📝 Comprehensive logging with status tracking
+
+            **Power Efficiency:**
+            - Starts with 60-second intervals for quick detection
+            - Gradually extends to 5-minute intervals when no activity detected
+            - Resets to frequent checking when properties reappear
+            - Uses efficient sleep to allow system idle states
+
+            **Changes in this build:**
+            - Enhanced property monitoring with continuous watching
+            - Adaptive intervals for power efficiency
+            - Improved logging and cleanup
+            - Build number: ${{ steps.build_number.outputs.BUILD_NUMBER }}
+
+            **Installation:**
+            1. Download the zip file below
+            2. Flash via Magisk Manager
+            3. Reboot device
+            4. Check `/data/adb/modules/remove_evolution_hooks/service.log` for status
+
+            **Compatibility:** Android 7+ with Magisk
+
+          files: Remove-Evolution-Hooks-Build-${{ steps.build_number.outputs.BUILD_NUMBER }}.zip
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
